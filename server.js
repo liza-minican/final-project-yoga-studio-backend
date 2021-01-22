@@ -3,11 +3,11 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import mongoose from "mongoose";
 import endpoints from "express-list-endpoints";
+import crypto from "crypto";
+import bcrypt from "bcrypt";
 
-// Defines the port the app will run on. Defaults to 8080, but can be
-// overridden when starting the server. For example:
-//
-//   PORT=9000 npm start
+// Defines the port the app will run on.
+
 const port = process.env.PORT || 8080;
 const app = express();
 
@@ -15,14 +15,11 @@ const app = express();
 const ERR_CANNOT_SAVE_TO_DATABASE = "Could not save video to the Database";
 const ERR_CANNOT_FIND_VIDEO_BY_ID = "Could not find video by id provided";
 
-//planning
-//think about reviews model
-
 const mongoUrl = process.env.MONGO_URL || "mongodb://localhost/yogaStudio";
 mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 mongoose.Promise = Promise;
 
-//user schema for sign in and sugn up with relation to video schema to store user's favourite videos  
+//user schema for sign in and sugn up with relation to video schema to store user's favourite videos
 const userSchema = new mongoose.Schema({
   userName: {
     type: String,
@@ -54,66 +51,52 @@ const userSchema = new mongoose.Schema({
   // selectedVideos: {
   //   type: Array,
   // },
-
-  //reference
-  //Object ID which id liked which video id
-  //aggreagate mongo
-  //carusel, most favourited
 });
 
-//week 18th and date 16th
+//week 18th and date 16th watch
 
-const videoSchema = new mongoose.Schema({
-  videoName: {
-    type: String,
-    required: true,
-  },
-  description: {
-    type: String,
-    required: true,
-  },
-  videoUrl: {
-    type: String,
-    required: true,
-  },
-  // category: {
-  //   type: String,
-  //   required: true,
-  //   enum: ["Beginner", "Intermediate", "Advanced"],
-  // },
-  length: {
-    type: Number,
-    required: true,
-  },
-  // rating: {
-  //   type: Number,
-  //   enum: [1,2,3,4,5]
-  // },
-  /// zomato
-  //survey progress bar/stars
+const videoSchema = new mongoose.Schema(
+  {
+    videoName: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    // videoUrl: {
+    //   type: String,
+    //   required: true,
+    // },
+    // category: {
+    //   type: String,
+    //   required: true,
+    //   enum: ["Beginner", "Intermediate", "Advanced"],
+    // },
+    // length: {
+    //   type: Number,
+    //   required: true,
+    // },
+    //RATING AND LIKES CAN BE ADDED LATER
+    // rating: {
+    //   type: Number,
+    //   enum: [1,2,3,4,5]
+    // },
 
-  // createdAt: {
-  //   type: Date,
-  //   default: Date.now,
-  // },
-  // updatedAt: {
-  //   type: Date,
-  //   default: Date.now,
-  // },
-  // likes: {
-  //   type: Number,
-  //   default: 0,
-  // },
-  //reference to the user
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-  //reference ?? filled the heart and like unlike
-  //{ timestamps: true }
-});
+    // likes: {
+    //   type: Number,
+    //   default: 0,
+    // },
 
-//link  users to collection and then ref in user
+    //reference to the user
+  //   user: {
+  //     type: mongoose.Schema.Types.ObjectId,
+  //     ref: "User",
+  //   },
+  // },
+  // { timestamps: true }
+);
 
 // Add middlewares to enable cors and json body parsing
 app.use(cors());
@@ -132,11 +115,58 @@ app.use((req, res, next) => {
   }
 });
 
-// Start defining your routes here
+// Start defining routes here
 app.get("/", (req, res) => {
   res.send("Hello world");
 });
 
+// HERE ARE THE ENDPOINTS FOR SIGN IN / SIGN UP
+
+// const authenticateUser = async (req, res, next) => {
+//   try {
+//     const accessToken = req.header("Authorization");
+//     const user = await User.findOne({ accessToken });
+//     if (!user) {
+//       throw "User not found";
+//     }
+//     req.user = user;
+//     next();
+//   } catch (err) {
+//     const errorMessage = "Please try logging in again";
+//     res.status(401).json({ error: errorMessage });
+//   }
+// };
+
+// Sign-up
+
+app.post("/users", async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    console.log("!!!", name, email, password);
+    const user = await new User({
+      name,
+      password: bcrypt.hashSync(password),
+    }).save();
+    res.status(200).json({ userId: user._id, accessToken: user.accessToken });
+  } catch (err) {
+    res.status(400).json({ message: "Could not create user", errors: err });
+  }
+});
+
+// Login
+app.post("/sessions", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (user && bcrypt.compareSync(password, user.password)) {
+      res.status(200).json({ userId: user._id, accessToken: user.accessToken });
+    } else {
+      throw "User not found";
+    }
+  } catch (err) {
+    res.status(404).json({ error: "User not found" });
+  }
+});
 // HERE ARE THE ENDPOINTS TO WORK WITH VIDEO COLLECTION
 
 //get the collection of all videos available to everyone
@@ -157,8 +187,10 @@ app.get("/videos/:id", async (req, res) => {
   }
 });
 
+//filter videos by length
+
 //filter short videos - 15, 30, 60
-app.get("/video/short", async (req, res) => {
+app.get("/video/length", async (req, res) => {
   const shortVideos = await Video.find({ length: { $lt: 15 } });
   if (shortVideos.length > 0) {
     res.json(shortVideos);
@@ -166,9 +198,6 @@ app.get("/video/short", async (req, res) => {
     res.status(404).json({ error: "No such video found" });
   }
 });
-//filter long videos
-
-//videos by category yoga type
 
 //video by level
 
