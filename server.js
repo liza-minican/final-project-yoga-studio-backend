@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 import endpoints from "express-list-endpoints";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
-
 // Defines the port the app will run on.
 
 const port = process.env.PORT || 8080;
@@ -90,12 +89,12 @@ const videoSchema = new mongoose.Schema(
     // },
 
     //reference to the user
-  //   user: {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: "User",
-  //   },
-  // },
-  // { timestamps: true }
+    //   user: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User",
+    //   },
+  },
+  { timestamps: true }
 );
 
 // Add middlewares to enable cors and json body parsing
@@ -141,10 +140,11 @@ app.get("/", (req, res) => {
 
 app.post("/users", async (req, res) => {
   try {
-    const { name, password } = req.body;
-    console.log("!!!", name, email, password);
+    const { userName, password } = req.body;
+    console.log("!!!", userName, password);
     const user = await new User({
-      name,
+      userName,
+      email: "liza@mail.ru",
       password: bcrypt.hashSync(password),
     }).save();
     res.status(200).json({ userId: user._id, accessToken: user.accessToken });
