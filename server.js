@@ -65,19 +65,19 @@ const videoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // videoUrl: {
-    //   type: String,
-    //   required: true,
-    // },
-    // category: {
-    //   type: String,
-    //   required: true,
-    //   enum: ["Beginner", "Intermediate", "Advanced"],
-    // },
-    // length: {
-    //   type: Number,
-    //   required: true,
-    // },
+    videoUrl: {
+      type: String,
+      required: true,
+    },
+    category: {
+      type: String,
+      required: true,
+      enum: ["Beginner", "Intermediate", "Advanced"],
+    },
+    length: {
+      type: Number,
+      required: true,
+    },
     //RATING AND LIKES CAN BE ADDED LATER
     // rating: {
     //   type: Number,
@@ -226,10 +226,10 @@ app.post("/videos", async (req, res) => {
     //retrive the information sent by the client to our API endpoint
     const { videoName, videoUrl, description, length, category } = req.body;
     const video = new Video({
-      video_name,
-      video_url,
+      videoName,
+      videUrl,
       description,
-      duration,
+      length,
       category,
     });
     const savedVideo = await video.save();
