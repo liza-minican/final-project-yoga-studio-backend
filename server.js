@@ -68,11 +68,11 @@ const videoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    category: {
-      type: String,
-      required: true,
-      enum: ["Beginner", "Intermediate", "Advanced"],
-    },
+    // category: {
+    //   type: String,
+    //   required: true,
+    //   enum: ["Beginner", "Intermediate", "Advanced"],
+    // },
     length: {
       type: Number,
       required: true,
@@ -140,15 +140,17 @@ app.get("/", (req, res) => {
 
 app.post("/users", async (req, res) => {
   try {
-    const { userName, password } = req.body;
-    console.log("!!!", userName, password);
+    const { userName, email, password } = req.body;
+    console.log("!!!", userName, email, password);
+    const SALT = bcrypt.genSaltSync(10);
     const user = await new User({
       userName,
-      email: "liza@mail.ru",
-      password: bcrypt.hashSync(password),
+      email,
+      password: bcrypt.hashSync(password, SALT),
     }).save();
     res.status(200).json({ userId: user._id, accessToken: user.accessToken });
   } catch (err) {
+    console.log("!!!", err, "!!!");
     res.status(400).json({ message: "Could not create user", errors: err });
   }
 });
@@ -224,13 +226,12 @@ app.post("/videos", async (req, res) => {
   try {
     //Success case
     //retrive the information sent by the client to our API endpoint
-    const { videoName, videoUrl, description, length, category } = req.body;
+    const { videoName, videoUrl, description, length } = req.body;
     const video = new Video({
       videoName,
-      videUrl,
+      videoUrl,
       description,
       length,
-      category,
     });
     const savedVideo = await video.save();
     res.status(200).json(savedVideo);
