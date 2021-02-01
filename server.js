@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import endpoints from "express-list-endpoints";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+import { StringDecoder } from "string_decoder";
 // Defines the port the app will run on.
 
 const port = process.env.PORT || 8080;
@@ -68,11 +69,11 @@ const videoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // category: {
-    //   type: String,
-    //   required: true,
-    //   enum: ["Beginner", "Intermediate", "Advanced"],
-    // },
+    category: {
+      type: String,
+      required: true,
+      enum: ["Beginner", "Intermediate", "Advanced"],
+    },
     length: {
       type: Number,
       required: true,
@@ -83,10 +84,12 @@ const videoSchema = new mongoose.Schema(
     //   enum: [1,2,3,4,5]
     // },
 
-    // likes: {
-    //   type: Number,
-    //   default: 0,
-    // },
+    likes: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 1,
+    },
 
     //reference to the user
     //   user: {
@@ -171,7 +174,7 @@ app.post("/sessions", async (req, res) => {
 });
 // HERE ARE THE ENDPOINTS TO WORK WITH VIDEO COLLECTION
 
-//get the collection of all videos available to everyone
+//get the collection of all videos available to everyone { WORKING }
 app.get("/videos", async (req, res) => {
   const videos = await Video.find().sort({ createdAt: "desc" }).limit(8).exec();
   res.json(videos);
@@ -179,9 +182,9 @@ app.get("/videos", async (req, res) => {
 
 //top 10 videos
 
-//Route to find one specific video by id
+//Route to find one specific video by id { WORKING }
 app.get("/videos/:id", async (req, res) => {
-  const videoById = await Video.findOne({ id: req.params.id });
+  const videoById = await Video.findOne({ _id: req.params.id });
   if (videoById) {
     res.json(videoById);
   } else {
@@ -192,14 +195,42 @@ app.get("/videos/:id", async (req, res) => {
 //filter videos by length
 
 //filter short videos - 15, 30, 60
-app.get("/video/length", async (req, res) => {
-  const shortVideos = await Video.find({ length: { $lt: 15 } });
-  if (shortVideos.length > 0) {
-    res.json(shortVideos);
+app.get("/videos/length/30", async (req, res) => {
+  const videosByLength = await Video.find({ length: 30 });
+  if (videosByLength) {
+    res.json(videosByLength);
   } else {
     res.status(404).json({ error: "No such video found" });
   }
 });
+app.get("/videos/length/15", async (req, res) => {
+  const videosByLength = await Video.find({ length: 15 });
+  if (videosByLength) {
+    res.json(videosByLength);
+  } else {
+    res.status(404).json({ error: "No such video found" });
+  }
+});
+app.get("/videos/length/20", async (req, res) => {
+  const videosByLength = await Video.find({ length: 20 });
+  if (videosByLength) {
+    res.json(videosByLength);
+  } else {
+    res.status(404).json({ error: "No such video found" });
+  }
+});
+// app.get("/videos/duration/:length", async (req, res) => {
+//   const videoByDuration = req.params.length;
+//   const video = await Video.findAll({
+//     // //length: { $regex:("/[[0-9]+]/") }
+//     length: 20,
+//   });
+//   if (video.length > 0) {
+//     res.json(video);
+//   } else {
+//     res.status(404).json({ error: "No such video found" });
+//   }
+// });
 
 //video by level
 
@@ -208,7 +239,7 @@ app.get("/video/length", async (req, res) => {
 
 // video liked
 //i need to limit likes on and off for ine particulat user to be able to filter videos by total amount of likes
-app.post("/videos/:id/liked", async (req, res) => {
+app.post("/videos/:id/like", async (req, res) => {
   try {
     const { id } = req.params;
     await Video.updateOne({ _id: id }, { $inc: { likes: 1 } });
@@ -220,18 +251,19 @@ app.post("/videos/:id/liked", async (req, res) => {
   }
 });
 
-//post a video, function available only for admins
+//post a video, function available only for admins { WORKING }
 app.post("/videos", async (req, res) => {
   //Try catch
   try {
     //Success case
     //retrive the information sent by the client to our API endpoint
-    const { videoName, videoUrl, description, length } = req.body;
+    const { videoName, videoUrl, description, length, category } = req.body;
     const video = new Video({
       videoName,
       videoUrl,
       description,
       length,
+      category,
     });
     const savedVideo = await video.save();
     res.status(200).json(savedVideo);
@@ -242,7 +274,7 @@ app.post("/videos", async (req, res) => {
       .json({ message: ERR_CANNOT_SAVE_TO_DATABASE, errors: err.errors });
   }
 });
-//delete a video function is available only for admin
+//delete a video function is available only for admin  {WORKING}
 app.delete("/videos/:id", async (req, res) => {
   try {
     //try to delete and send a successful response
@@ -255,6 +287,37 @@ app.delete("/videos/:id", async (req, res) => {
     res.status(400).json({ success: false });
   }
 });
+
+// updating a video endpoint
+// app.patch("/videos/:id", async (req, res) => {
+//   try {
+//     //try to delete and send a successful response
+//     const video = await Video.findByID({ _id: id });
+//     const {
+//       videoName = video.videoName,
+//       videoUrl = video.videoUrl,
+//       description = video.description,
+//       category = video.category,
+//       length = video.length,
+//     } = req.body;
+//     const updateVideo = await Video.findByIdAndUpdate(
+//       { _id: id },
+//       { videoName, videoUrl, description, category, length },
+//       { runValidators: true }
+//     );
+//     return res.status(202).json(updatedVideo);
+//   } catch (error) {
+//     try {
+//       await Video.findById({ _id: id }); // id is matching, the model validation is off
+//       return res
+//         .status(400)
+//         .json({ message: "Could not update video", error: err.message });
+//     } catch (err) {
+//       // id is not matching, the validation can be either right or wrong
+//       return res.status(404).json({ message: ERR_CANNOT_FIND_VIDEO_BY_ID, id });
+//     }
+//   }
+// });
 
 // Start the server
 app.listen(port, () => {
