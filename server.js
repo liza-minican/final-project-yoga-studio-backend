@@ -25,7 +25,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     minlength: 5,
     maxlength: 20,
-    unique: true,
     required: true,
   },
   email: {
@@ -151,7 +150,14 @@ app.post("/users", async (req, res) => {
       email,
       password: bcrypt.hashSync(password, SALT),
     }).save();
-    res.status(200).json({ userId: user._id, accessToken: user.accessToken });
+    res.status(200).json({
+      message: "User created!",
+      userId: user._id,
+      accessToken: user.accessToken,
+      userName: user.userName,
+      email: user.email,
+      password: user.password,
+    });
   } catch (err) {
     console.log("!!!", err, "!!!");
     res.status(400).json({ message: "Could not create user", errors: err });
@@ -162,6 +168,7 @@ app.post("/users", async (req, res) => {
 app.post("/sessions", async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("!!!", email, password);
     const user = await User.findOne({ email });
     if (user && bcrypt.compareSync(password, user.password)) {
       res.status(200).json({ userId: user._id, accessToken: user.accessToken });
