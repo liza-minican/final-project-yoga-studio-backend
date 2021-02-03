@@ -123,20 +123,21 @@ app.get("/", (req, res) => {
 
 // HERE ARE THE ENDPOINTS FOR SIGN IN / SIGN UP
 
-// const authenticateUser = async (req, res, next) => {
-//   try {
-//     const accessToken = req.header("Authorization");
-//     const user = await User.findOne({ accessToken });
-//     if (!user) {
-//       throw "User not found";
-//     }
-//     req.user = user;
-//     next();
-//   } catch (err) {
-//     const errorMessage = "Please try logging in again";
-//     res.status(401).json({ error: errorMessage });
-//   }
-// };
+//this middleware is for user authentification
+const authenticateUser = async (req, res, next) => {
+  try {
+    const accessToken = req.header("Authorization");
+    const user = await User.findOne({ accessToken });
+    if (!user) {
+      throw "User not found";
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    const errorMessage = "User not found. Please try logging in again";
+    res.status(401).json({ error: errorMessage });
+  }
+};
 
 // Sign-up
 
@@ -238,13 +239,68 @@ app.get("/videos/length/20", async (req, res) => {
 //     res.status(404).json({ error: "No such video found" });
 //   }
 // });
+// PUT: endpoint to add favoritevideo for a logged-in user:
+// UPDATES the user and adds the favorite video to the favorite videos-array for that user.
 
-//video by level
+app.put("/users/:userId/favorites/:videoId", authenticateUser);
+app.put("/users/:userId/favorites/:videoId", async (req, res) => {
+  const { userId, videoId } = req.params;
+  try {
+    const selectedVideo = await Video.findById(videoId); // Find the video the user wants to add.
+    console.log("selectedVideo", selectedVideo);
+    await User.updateOne(
+      { _id: userId },
+      { $push: { selectedVideos: selectedVideo } } //push the selected video into the favorite videos array
+    );
+    //console.log("")
+    res.status(200).json(selectedVideo);
+  } catch (err) {
+    res.status(404).json({
+      message: "Could not add video.",
+      errors: { message: err.message, error: err },
+    });
+  }
+});
+//delete a video from favourites
+app.delete("/users/:userId/favorites/:videoId", async (req, res) => {
+  const { userId, videoId } = req.params;
+  try {
+    const selectedVideo = await Video.findById(videoId); // Find the video the user wants to add.
+    console.log("selectedVideo", selectedVideo);
+    await User.deleteOne(
+      { _id: userId },
+      { $pull: { selectedVideos: selectedVideo } } //push the selected video into the favorite videos array
+    );
+    //console.log("")
+    res.status(200).json(selectedVideo);
+  } catch (err) {
+    res.status(404).json({
+      message: "Could not remove video.",
+      errors: { message: err.message, error: err },
+    });
+  }
+});
 
-//videos available when signed in
-//your favourite videos
+app.get("/users/:id/favorites", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (userId != req.user._id) {
+      throw "Access denied";
+    }
+    const userFavoritesArray = await req.user.favoriteVideos; //--> shows array of added videos (video-id:s)
+    const getCurrentFavoriteVideos = await Video.find({
+      _id: userFavoritesArray,
+    }); // --> outputs the whole video-object in user favorites!
+    res.status(200).json(getCurrentFavoriteVideos);
+  } catch (err) {
+    res.status(403).json({
+      message:
+        "Could not get favorite videos. User must be logged in to see favorite videos.",
+      errors: { message: err.message, error: err },
+    });
+  }
+});
 
-// video liked
 //i need to limit likes on and off for ine particulat user to be able to filter videos by total amount of likes
 app.post("/videos/:id/like", async (req, res) => {
   try {
