@@ -11,6 +11,9 @@ import { StringDecoder } from "string_decoder";
 const port = process.env.PORT || 8080;
 const app = express();
 
+// list endpoints in the '/' route
+const listEndpoints = require("express-list-endpoints");
+
 // error messages
 const ERR_CANNOT_SAVE_TO_DATABASE = "Could not save video to the Database";
 const ERR_CANNOT_FIND_VIDEO_BY_ID = "Could not find video by id provided";
@@ -78,8 +81,7 @@ const videoSchema = new mongoose.Schema(
       required: true,
     },
     //RATING AND LIKES CAN BE ADDED LATER
-    // rating: {
-    //   type: Number,
+    // rating: { //   type: Number,
     //   enum: [1,2,3,4,5]
     // },
 
@@ -118,7 +120,7 @@ app.use((req, res, next) => {
 
 // Start defining routes here
 app.get("/", (req, res) => {
-  res.send("Hello world");
+  res.send(listEndpoints(app));
 });
 
 // HERE ARE THE ENDPOINTS FOR SIGN IN / SIGN UP
@@ -166,13 +168,37 @@ app.post("/users", async (req, res) => {
 });
 
 // Login
+
+// app.post("/sessions", async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+//     console.log("!!!", email, password);
+//     const user = await User.findOne({ email });
+//     if (user && bcrypt.compareSync(password, user.password)) {
+//       res.status(200).json({ userId: user._id, accessToken: user.accessToken });
+//     } else {
+//       throw "User not found";
+//     }
+//   } catch (err) {
+//     res.status(404).json({ error: "User not found" });
+//   }
+// });
 app.post("/sessions", async (req, res) => {
   try {
     const { email, password } = req.body;
+    const accessTokenUpdate = crypto.randomBytes(128).toString("hex");
     console.log("!!!", email, password);
     const user = await User.findOne({ email });
     if (user && bcrypt.compareSync(password, user.password)) {
-      res.status(200).json({ userId: user._id, accessToken: user.accessToken });
+      const updatedUser = await User.findOneAndUpdate(
+        { email: email },
+        { accessToken: accessTokenUpdate },
+        { new: true, useFindAndModify: false }
+      );
+      res.status(200).json({
+        userId: updatedUser._id,
+        accessToken: updatedUser.accessToken,
+      });
     } else {
       throw "User not found";
     }
@@ -180,11 +206,35 @@ app.post("/sessions", async (req, res) => {
     res.status(404).json({ error: "User not found" });
   }
 });
+
+//Logout
+// app.post("/users/logout", authenticateUser);
+// app.post("users/logout", async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+//     const updatedUser = await User.findOneAndUpdate(
+//       //need to see why the user ID stays
+//       { _id: userId },
+//       { accessToken: null },
+//       { new: true, useFindAndModify: false }
+//     );
+//     res.status(200).json({
+//       userId: updatedUser._id,
+//       accessToken: updatedUser.accessToken,
+//     });
+//   } catch (err) {
+//     res.status(400).json({ error: err, message: "Could not log out" });
+//   }
+// });
+
 // HERE ARE THE ENDPOINTS TO WORK WITH VIDEO COLLECTION
 
 //get the collection of all videos available to everyone { WORKING }
 app.get("/videos", async (req, res) => {
-  const videos = await Video.find().sort({ createdAt: "desc" }).limit(8).exec();
+  const videos = await Video.find()
+    .sort({ createdAt: "desc" })
+    .limit(20)
+    .exec();
   res.json(videos);
 });
 
@@ -294,8 +344,7 @@ app.get("/users/:id/favorites", async (req, res) => {
     res.status(200).json(getCurrentFavoriteVideos);
   } catch (err) {
     res.status(403).json({
-      message:
-        "Could not get favorite videos. User must be logged in to see favorite videos.",
+      message: "Could not get favorite videos. User must be logged in.",
       errors: { message: err.message, error: err },
     });
   }
