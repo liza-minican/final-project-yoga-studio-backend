@@ -312,35 +312,38 @@ app.put("/users/:userId/favorites/:videoId", async (req, res) => {
   }
 });
 //delete a video from favourites
+app.delete("/users/:userId/favorites/:videoId", authenticateUser);
 app.delete("/users/:userId/favorites/:videoId", async (req, res) => {
   const { userId, videoId } = req.params;
   try {
-    const selectedVideo = await Video.findById(videoId); // Find the video the user wants to add.
+    const selectedVideo = await Video.findById(videoId); // Find the video the user wants to delete.
     console.log("selectedVideo", selectedVideo);
-    await User.deleteOne(
+    await User.updateOne(
       { _id: userId },
-      { $pull: { selectedVideos: selectedVideo } } //push the selected video into the favorite videos array
+      { $pull: { selectedVideos: { $in: [selectedVideo] } } } //delete the selected video from the favorite videos array
     );
+    //$pull: { fruits: { $in: [ "apples", "oranges" ] }
     //console.log("")
     res.status(200).json(selectedVideo);
   } catch (err) {
+    console.log(err);
     res.status(404).json({
       message: "Could not remove video.",
       errors: { message: err.message, error: err },
     });
   }
 });
-
-app.get("/users/:id/favorites", async (req, res) => {
+app.get("/users/:userId/favorites", authenticateUser);
+app.get("/users/:userId/favorites", async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.params.userId;
     if (userId != req.user._id) {
       throw "Access denied";
     }
-    const userFavoritesArray = await req.user.favoriteVideos; //--> shows array of added videos (video-id:s)
+    const favoritesArray = await req.user.selectedVideos; //array of added videos (video-id:s)
     const getCurrentFavoriteVideos = await Video.find({
-      _id: userFavoritesArray,
-    }); // --> outputs the whole video-object in user favorites!
+      _id: favoritesArray,
+    }); // gives the  video-object in user favorites
     res.status(200).json(getCurrentFavoriteVideos);
   } catch (err) {
     res.status(403).json({
