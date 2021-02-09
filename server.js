@@ -167,22 +167,6 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// Login
-
-// app.post("/sessions", async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     console.log("!!!", email, password);
-//     const user = await User.findOne({ email });
-//     if (user && bcrypt.compareSync(password, user.password)) {
-//       res.status(200).json({ userId: user._id, accessToken: user.accessToken });
-//     } else {
-//       throw "User not found";
-//     }
-//   } catch (err) {
-//     res.status(404).json({ error: "User not found" });
-//   }
-// });
 app.post("/sessions", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -293,6 +277,40 @@ app.get("/videos/length/20", async (req, res) => {
 // PUT: endpoint to add favoritevideo for a logged-in user:
 // UPDATES the user and adds the favorite video to the favorite videos-array for that user.
 
+//<----------SHOW FAVORITE VIDEOS, ADD TO FAVORITE AND DELETE FROM FAVORITE---------->
+//--ADD--
+// app.put("/users/:userId/favorites/:videoId", authenticateUser);
+// app.put("/users/:userId/favorites/:videoId", async (req, res) => {
+//   const { userId, videoId } = req.params;
+//   try {
+//     const selectedVideo = await Video.findById(videoId); // Find the video the user wants to add.
+//     const selectedVideos = await req.user.selectedVideos; // array of selected videos in user model
+//     //const getCurrentSelectedVideos = await Video.find({
+//     //  _id: selectedVideos,
+//    //});
+//     //console.log("currentselected", getCurrentSelectedVideos);
+//     //console.log("selectedVideo", selectedVideo);
+//     console.log("selectedVideos", selectedVideos);
+//     //if (selectedVideos.some((video) => video._id === selectedVideo._id)) {
+//     //  alert("Video already existst!");
+//     //} else {
+//      // alert("Object not found.");
+//       await User.updateOne(
+//         { _id: userId },
+//         { $push: { selectedVideos: selectedVideo } } //push the selected video into the favorite videos array
+//       );
+//     }
+//     console.log("");
+//     res.status(200).json(selectedVideo);
+//   } catch (err) {
+//     res.status(404).json({
+//       message: "Could not add video.",
+//       errors: { message: err.message, error: err },
+//     });
+//   }
+// });
+
+//----old version without filtering duplicates
 app.put("/users/:userId/favorites/:videoId", authenticateUser);
 app.put("/users/:userId/favorites/:videoId", async (req, res) => {
   const { userId, videoId } = req.params;
@@ -312,7 +330,7 @@ app.put("/users/:userId/favorites/:videoId", async (req, res) => {
     });
   }
 });
-//delete a video from favourites
+//--DELETE--
 app.delete("/users/:userId/favorites/:videoId", authenticateUser);
 app.delete("/users/:userId/favorites/:videoId", async (req, res) => {
   const { userId, videoId } = req.params;
@@ -334,6 +352,7 @@ app.delete("/users/:userId/favorites/:videoId", async (req, res) => {
     });
   }
 });
+//--SHOW FAVORITE VIDEOS--
 app.get("/users/:userId/favorites", authenticateUser);
 app.get("/users/:userId/favorites", async (req, res) => {
   try {
