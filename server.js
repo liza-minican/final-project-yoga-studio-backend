@@ -26,7 +26,7 @@ mongoose.Promise = Promise;
 const userSchema = new mongoose.Schema({
   userName: {
     type: String,
-    minlength: 5,
+    minlength: 4,
     maxlength: 20,
     required: true,
   },
@@ -198,6 +198,7 @@ app.post("/sessions", async (req, res) => {
       res.status(200).json({
         userId: updatedUser._id,
         accessToken: updatedUser.accessToken,
+        userName: updatedUser.userName,
       });
     } else {
       throw "User not found";
