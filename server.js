@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import endpoints from "express-list-endpoints";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
-import { StringDecoder } from "string_decoder";
+//import { StringDecoder } from "string_decoder";
 // Defines the port the app will run on.
 
 const port = process.env.PORT || 8080;
