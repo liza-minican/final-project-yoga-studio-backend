@@ -9,19 +9,20 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@babel/core": "^7.8.3",
+    "@babel/core": "^7.12.13",
     "@babel/helper-compilation-targets": "^7.12.13",
-    "@babel/node": "^7.8.3",
-    "@babel/preset-env": "^7.8.3",
+    "@babel/node": "^7.12.13",
+    "@babel/preset-env": "^7.12.13",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "express": "^4.17.1",
     "express-list-endpoints": "^5.0.0",
-    "mongodb": "^3.6.3",
-    "mongoose": "^5.11.13",
-    "nodemon": "^2.0.2"
+    "mongodb": "^3.6.4",
+    "mongoose": "^5.11.15",
+    "nodemon": "^2.0.2",
+    "serve": "^11.3.2"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
