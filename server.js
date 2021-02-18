@@ -104,7 +104,8 @@ app.use((req, res, next) => {
 
 // Start defining routes here
 app.get("/", (req, res) => {
-  res.send(listEndpoints(app));
+  res.send("Hello");
+  //res.send(listEndpoints(app));
 });
 
 // HERE ARE THE ENDPOINTS FOR SIGN IN / SIGN UP
